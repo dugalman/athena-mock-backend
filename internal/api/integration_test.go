@@ -133,3 +133,38 @@ func TestEGMAndSocioFlow(t *testing.T) {
 	router.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
 }
+
+// ...
+func TestPuntajeFlow(t *testing.T) {
+	server := setupTestServer(t)
+	router := server.router
+
+	// 1. Obtener puntaje inicial del socio 2 (ID: 2)
+	req, _ := http.NewRequest("GET", "/socios/2/puntaje", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	var puntajeResponse map[string]interface{}
+	json.Unmarshal(w.Body.Bytes(), &puntajeResponse)
+	// El seeder inicializa al socio 2 con 6666 puntos
+	assert.EqualValues(t, 6666, puntajeResponse["puntaje"])
+
+	// 2. Añadir 100 puntos al socio 2
+	addPuntajeBody := `{"puntaje": 100}`
+	req, _ = http.NewRequest("POST", "/socios/2/puntaje", bytes.NewBufferString(addPuntajeBody))
+	req.Header.Set("Content-Type", "application/json")
+	w = httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	// 3. Verificar el nuevo puntaje
+	req, _ = http.NewRequest("GET", "/socios/2/puntaje", nil)
+	w = httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	json.Unmarshal(w.Body.Bytes(), &puntajeResponse)
+	// 6666 (inicial) + 100 (añadido) = 6766
+	assert.EqualValues(t, 6766, puntajeResponse["puntaje"])
+}

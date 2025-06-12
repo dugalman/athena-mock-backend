@@ -285,3 +285,48 @@ func (s *Server) decrementBalanceHandler() gin.HandlerFunc {
 		c.JSON(http.StatusOK, gin.H{"message": "Balance decrementado"})
 	}
 }
+
+func (s *Server) getPuntajeHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "ID de Socio inválido"})
+			return
+		}
+		puntaje, err := s.socioService.GetPuntaje(id)
+		if err != nil {
+			if errors.Is(err, service.ErrSocioNotFound) {
+				c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"socio_id": id, "puntaje": puntaje})
+	}
+}
+
+type PuntajeRequest struct {
+	Puntaje int `json:"puntaje"`
+}
+
+func (s *Server) addPuntajeHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "ID de Socio inválido"})
+			return
+		}
+		var req PuntajeRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Se requiere 'puntaje' en el cuerpo"})
+			return
+		}
+
+		if err := s.socioService.AddPuntaje(id, req.Puntaje); err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"message": "Puntaje añadido exitosamente"})
+	}
+}
