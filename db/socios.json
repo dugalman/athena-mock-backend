@@ -1,0 +1,18 @@
+[
+  {
+    "id": 1,
+    "realName": "Juan Perez",
+    "name": "Juancho",
+    "dni": "12345678",
+    "password": "pass123",
+    "balance": 1000
+  },
+  {
+    "id": 2,
+    "realName": "Maria Garcia",
+    "name": "Mary",
+    "dni": "87654321",
+    "password": "mypass",
+    "balance": 500
+  }
+]

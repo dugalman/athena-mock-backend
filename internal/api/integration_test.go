@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/assert" // Una librería de aserciones muy popular
 )
 
-// Para instalar testify: go get github.com/stretchr/testify
 func TestLoginLogoutIntegration(t *testing.T) {
 	// 1. Setup
 	// Limpiamos las sesiones antes de cada test para asegurar un estado limpio.
