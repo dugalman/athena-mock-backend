@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"net/http"
+	"runtime"
 	"strconv"
 	"sync"
 
@@ -328,5 +329,29 @@ func (s *Server) addPuntajeHandler() gin.HandlerFunc {
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"message": "Puntaje añadido exitosamente"})
+	}
+}
+
+// --- INFO HANDLER ---
+
+func (s *Server) InfoHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Construimos la respuesta usando datos de la configuración y del sistema
+		response := model.InfoResponse{
+			Environment:  s.cfg.Environment,
+			GoVersion:    runtime.Version(),                   // Obtiene la versión de Go (ej: go1.21.0)
+			HostPlatform: runtime.GOOS + "/" + runtime.GOARCH, // ej: linux/amd64
+			Port:         s.cfg.Port,
+			Version:      s.cfg.AppVersion,
+			Asistente:    false, // Valor estático como en el ejemplo
+		}
+
+		// En Go, es más idiomático devolver el objeto directamente.
+		// Gin se encargará de envolverlo en un campo "data" si es necesario,
+		// pero la práctica común es devolver el objeto tal cual.
+		// Para replicar exactamente la salida, lo envolvemos.
+		c.JSON(http.StatusOK, gin.H{
+			"data": response,
+		})
 	}
 }

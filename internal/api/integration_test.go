@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"athena.mock/backend/internal/config"
@@ -200,4 +201,32 @@ func TestPuntajeFlow(t *testing.T) {
 	json.Unmarshal(w.Body.Bytes(), &puntajeResponse)
 	// 6666 (inicial) + 100 (añadido) = 6766
 	assert.EqualValues(t, 6766, puntajeResponse["puntaje"])
+}
+
+func TestInfoEndpoint(t *testing.T) {
+	server := setupTestServer(t)
+	router := server.router
+
+	// Hacemos la petición POST al endpoint /info
+	req, _ := http.NewRequest("POST", "/info", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	// 1. Verificar el código de estado
+	assert.Equal(t, http.StatusOK, w.Code, "El código de estado de /info debe ser 200")
+
+	// 2. Verificar el cuerpo de la respuesta
+	var response map[string]model.InfoResponse // La respuesta está envuelta en un objeto "data"
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	assert.NoError(t, err, "La respuesta de /info debe ser un JSON válido")
+
+	// 3. Verificar los campos
+	infoData, ok := response["data"]
+	assert.True(t, ok, "La respuesta debe contener un campo 'data'")
+
+	assert.NotEmpty(t, infoData.GoVersion, "goVersion no debe estar vacío")
+	assert.Equal(t, "3.8.0", infoData.Version, "La versión de la app debe coincidir")
+	assert.Equal(t, server.cfg.Port, infoData.Port, "El puerto debe coincidir con la configuración")
+	assert.Equal(t, false, infoData.Asistente, "El campo asistente debe ser false")
+	assert.Equal(t, runtime.GOOS+"/"+runtime.GOARCH, infoData.HostPlatform, "La plataforma del host debe ser correcta")
 }

@@ -29,4 +29,8 @@ func (s *Server) setupRoutes(router *gin.Engine) {
 		socioRoutes.GET("/:id/puntaje", s.getPuntajeHandler())
 		socioRoutes.POST("/:id/puntaje", s.addPuntajeHandler())
 	}
+
+	// --- RUTA DE INFORMACIÓN ---
+	router.POST("/info", s.InfoHandler())
+
 }

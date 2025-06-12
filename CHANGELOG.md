@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+
+## [3.0.0] - 2023-06-12
+
+1. Definir la Estructura de Respuesta: Crearemos una struct en el paquete model para representar la respuesta JSON.
+2. Crear el Handler: Escribiremos el handler que recolecta la información (versión, sistema operativo, etc.) y construye la respuesta.
+3. Añadir la Ruta: Registraremos la ruta POST /info en nuestro router.
+4. Escribir la Prueba: Añadiremos una nueva prueba de integración para verificar que el endpoint funciona como se espera.
+
 ## [2.0.0] - 2023-06-12
 
 1. Modificar la Entidad Socio: Añadiremos el campo Puntaje.
