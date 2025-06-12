@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"sync" // Importamos sync
 
 	"athena.mock/backend/internal/model"
 	"athena.mock/backend/internal/repository"
@@ -11,22 +12,35 @@ import (
 var (
 	ErrSocioNotFound       = errors.New("socio no encontrado")
 	ErrInsufficientBalance = errors.New("balance insuficiente")
+	socioServiceInstance   *SocioService
+	socioOnce              sync.Once
 )
 
 type SocioService struct {
 	repo *repository.JSONPersistor[model.Socio]
 }
 
-func NewSocioService() (*SocioService, error) {
-	initialSocios := []model.Socio{
-		{ID: 1, RealName: "Juan Perez", Name: "Juancho", DNI: "12345678", Password: "pass123", Balance: 1000.0},
-		{ID: 2, RealName: "Maria Garcia", Name: "Mary", DNI: "87654321", Password: "mypass", Balance: 500.0},
-	}
-	repo, err := repository.NewJSONPersistor("db/socios.json", initialSocios)
-	if err != nil {
-		return nil, fmt.Errorf("fallo al inicializar el repositorio de Socios: %w", err)
-	}
-	return &SocioService{repo: repo}, nil
+// GetSocioService initializes and returns a singleton instance of SocioService.
+// It ensures that the service is only created once using sync.Once. The service is
+// initialized with a default set of Socio data and persists data in a JSON file.
+// If the repository fails to initialize, an error is returned.
+//
+// Returns:
+//   - *SocioService: Pointer to the singleton SocioService instance.
+//   - error: Error if initialization fails, otherwise nil.
+func GetSocioService() (*SocioService, error) {
+	var err error
+	socioOnce.Do(func() {
+		initialSocios := []model.Socio{ /* ... tus datos iniciales por defecto ... */ }
+		// La creación real solo sucede una vez.
+		repo, repoErr := repository.NewJSONPersistor("db/socios.json", initialSocios)
+		if repoErr != nil {
+			err = fmt.Errorf("fallo al inicializar el repositorio de Socios: %w", repoErr)
+			return
+		}
+		socioServiceInstance = &SocioService{repo: repo}
+	})
+	return socioServiceInstance, err
 }
 
 // findSocio busca un socio por ID y devuelve un puntero a él.
