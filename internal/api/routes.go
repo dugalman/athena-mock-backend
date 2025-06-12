@@ -25,5 +25,8 @@ func (s *Server) setupRoutes(router *gin.Engine) {
 		socioRoutes.GET("/:id/balance", s.getBalanceHandler())
 		socioRoutes.POST("/:id/balance/increment", s.incrementBalanceHandler())
 		socioRoutes.POST("/:id/balance/decrement", s.decrementBalanceHandler())
+
+		socioRoutes.GET("/:id/puntaje", s.getPuntajeHandler())
+		socioRoutes.POST("/:id/puntaje", s.addPuntajeHandler())
 	}
 }
