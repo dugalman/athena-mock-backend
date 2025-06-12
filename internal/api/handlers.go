@@ -269,10 +269,20 @@ func (s *Server) decrementBalanceHandler() gin.HandlerFunc {
 		}
 
 		// @TODO: ¿ tenes que prevenir saldos negativos? ¿ lo tenes que poner dentro del sevicio
-		if err := s.socioService.DecrementBalance(id, req.Amount); err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		err = s.socioService.DecrementBalance(id, req.Amount)
+		if err != nil {
+			if errors.Is(err, service.ErrSocioNotFound) {
+				c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+				return
+			}
+			if errors.Is(err, service.ErrInsufficientBalance) {
+				c.JSON(http.StatusConflict, gin.H{"error": err.Error()}) // 409 Conflict es bueno para esto
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+
 		c.JSON(http.StatusOK, gin.H{"message": "Balance decrementado"})
 	}
 }
