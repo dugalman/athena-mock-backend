@@ -29,6 +29,11 @@ test-integration:
 	@echo ">> Ejecutando pruebas de integración..."
 	$(GO) test -v ./...
 
+.PHONY: seed
+seed:
+	@echo ">> Sembrando la base de datos con datos iniciales..."
+	$(GO) run ./cmd/seeder/main.go
+
 # ==============================================================================
 # Comandos de Build
 # ==============================================================================

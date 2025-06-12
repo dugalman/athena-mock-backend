@@ -1,18 +1,65 @@
 [
   {
     "id": 1,
-    "realName": "Juan Perez",
-    "name": "Juancho",
-    "dni": "12345678",
-    "password": "pass123",
-    "balance": 1000
+    "realName": "CASH",
+    "name": "",
+    "dni": "20250513",
+    "password": "123456",
+    "balance": 1000000,
+    "puntaje": 777
   },
   {
     "id": 2,
-    "realName": "Maria Garcia",
-    "name": "Mary",
-    "dni": "87654321",
-    "password": "mypass",
-    "balance": 500
+    "realName": "CVIP",
+    "name": "",
+    "dni": "20250514",
+    "password": "123456",
+    "balance": 1000000,
+    "puntaje": 6666
+  },
+  {
+    "id": 3,
+    "realName": "Juan Salvo",
+    "name": "",
+    "dni": "48572913",
+    "password": "123456",
+    "balance": 1000000,
+    "puntaje": 0
+  },
+  {
+    "id": 4,
+    "realName": "Inodoro Pereyra",
+    "name": "",
+    "dni": "23650198",
+    "password": "123456",
+    "balance": 1000000,
+    "puntaje": 0
+  },
+  {
+    "id": 5,
+    "realName": "Jorge Lavandina Pérez",
+    "name": "",
+    "dni": "39158276",
+    "password": "123456",
+    "balance": 1000000,
+    "puntaje": 0
+  },
+  {
+    "id": 6,
+    "realName": "Gabriel David León",
+    "name": "",
+    "dni": "41736084",
+    "password": "123456",
+    "balance": 1000000,
+    "puntaje": 0
+  },
+  {
+    "id": 7,
+    "realName": "Esteban Espinosa",
+    "name": "",
+    "dni": "30498127",
+    "password": "123456",
+    "balance": 1000000,
+    "puntaje": 0
   }
 ]
