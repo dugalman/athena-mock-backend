@@ -19,11 +19,11 @@ func main() {
 	cfg := config.Load()
 
 	// Inicializar servicios
-	egmService, err := service.NewEGMService()
+	egmService, err := service.GetEGMService()
 	if err != nil {
 		log.Fatalf("Error al inicializar EGMService: %v", err)
 	}
-	socioService, err := service.NewSocioService()
+	socioService, err := service.GetSocioService()
 	if err != nil {
 		log.Fatalf("Error al inicializar SocioService: %v", err)
 	}

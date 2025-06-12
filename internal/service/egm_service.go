@@ -3,31 +3,43 @@ package service
 import (
 	"errors"
 	"fmt"
+	"sync"
 
 	"athena.mock/backend/internal/model"
 	"athena.mock/backend/internal/repository"
 )
 
 var (
-	ErrEGMNotFound = errors.New("EGM no encontrada")
+	ErrEGMNotFound     = errors.New("EGM no encontrada")
+	egmServiceInstance *EGMService
+	egmOnce            sync.Once
 )
 
 type EGMService struct {
 	repo *repository.JSONPersistor[model.EGM]
 }
 
-func NewEGMService() (*EGMService, error) {
-	// Datos iniciales si el archivo no existe
-	initialEGMs := []model.EGM{
-		{ID: 1004, IsOccupied: false, OccupiedBy: nil, Game: "DIOSES DE AZAR", Credits: 0},
-		{ID: 1005, IsOccupied: false, OccupiedBy: nil, Game: "FORTUNE COINS", Credits: 150.5},
-	}
-	// Asegúrate de que exista la carpeta 'db'
-	repo, err := repository.NewJSONPersistor("db/egms.json", initialEGMs)
-	if err != nil {
-		return nil, fmt.Errorf("fallo al inicializar el repositorio de EGMs: %w", err)
-	}
-	return &EGMService{repo: repo}, nil
+// GetEGMService initializes and returns a singleton instance of EGMService.
+// It ensures that the EGMService is only created once using sync.Once.
+// If the underlying repository file does not exist, it initializes it with default EGM data.
+// Returns the EGMService instance and any error encountered during initialization.
+func GetEGMService() (*EGMService, error) {
+	var err error
+	egmOnce.Do(func() {
+		// Datos iniciales si el archivo no existe
+		initialEGMs := []model.EGM{
+			{ID: 1004, IsOccupied: false, OccupiedBy: nil, Game: "DIOSES DE AZAR", Credits: 0},
+			{ID: 1005, IsOccupied: false, OccupiedBy: nil, Game: "FORTUNE COINS", Credits: 150.5},
+		}
+		// Asegúrate de que exista la carpeta 'db'
+		repo, repoErr := repository.NewJSONPersistor("db/egms.json", initialEGMs)
+		if repoErr != nil {
+			err = fmt.Errorf("fallo al inicializar repositorio EGM: %w", repoErr)
+			return
+		}
+		egmServiceInstance = &EGMService{repo: repo}
+	})
+	return egmServiceInstance, err
 }
 
 // findEGM busca una EGM por ID y devuelve un puntero a ella para modificarla.

@@ -31,8 +31,13 @@ type SocioService struct {
 func GetSocioService() (*SocioService, error) {
 	var err error
 	socioOnce.Do(func() {
-		initialSocios := []model.Socio{ /* ... tus datos iniciales por defecto ... */ }
-		// La creación real solo sucede una vez.
+
+		initialSocios := []model.Socio{
+			{ID: 1, RealName: "Juan Perez", Name: "Juancho", DNI: "12345678", Password: "pass123", Balance: 1000.0},
+			{ID: 2, RealName: "Maria Garcia", Name: "Mary", DNI: "87654321", Password: "mypass", Balance: 500.0},
+		}
+
+		// Asegúrate de que exista la carpeta 'db'
 		repo, repoErr := repository.NewJSONPersistor("db/socios.json", initialSocios)
 		if repoErr != nil {
 			err = fmt.Errorf("fallo al inicializar el repositorio de Socios: %w", repoErr)
