@@ -1,0 +1,17 @@
+# Directorio de build
+/build/
+
+# Binarios locales con nombres genéricos (si los creas sin el Makefile)
+athena_server
+athena_server_*
+
+# Archivos de log y de resultados de pruebas
+*.log
+
+# Archivos de configuración de IDEs
+.idea/
+.vscode/
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db

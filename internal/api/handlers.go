@@ -1,12 +1,13 @@
 package api
 
 import (
+	"net/http"
+	"sync"
+
 	"athena.mock/backend/internal/auth"
 	"athena.mock/backend/internal/config"
 	"athena.mock/backend/internal/model"
 	"github.com/gin-gonic/gin"
-	"net/http"
-	"sync"
 )
 
 // Usamos un mapa con un Mutex para manejar sesiones de forma segura para concurrencia.
@@ -15,6 +16,7 @@ var activeSessions = struct {
 	m map[string]string
 }{m: make(map[string]string)}
 
+// /////////////////////////////////////////////////////////////
 // LoginRequestBody define la estructura del JSON que esperamos en el body.
 type LoginRequestBody struct {
 	Data struct {
@@ -75,4 +77,44 @@ func LoginHandler(cfg *config.Config) gin.HandlerFunc {
 			},
 		})
 	}
+}
+
+///////////////////////////////////////////////////////////////
+
+// LogoutRequestBody define el body para el logout
+type LogoutRequestBody struct {
+	UserID string `json:"userId"`
+}
+
+// LogoutHandler elimina una sesión activa.
+func LogoutHandler(cfg *config.Config) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var body LogoutRequestBody
+		// En una implementación real, el userID vendría del token JWT (c.GetString("userID"))
+		// pero para replicar el test de Node.js, lo leemos del body.
+		if err := c.ShouldBindJSON(&body); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body, expecting userId"})
+			return
+		}
+
+		userID := body.UserID
+
+		// Eliminar la sesión
+		activeSessions.Lock()
+		delete(activeSessions.m, userID)
+		activeSessions.Unlock()
+
+		c.JSON(http.StatusOK, gin.H{
+			"requestType": "logout",
+			"error":       0,
+			"message":     "Sesión finalizada. Usuario: " + userID,
+		})
+	}
+}
+
+// ClearActiveSessions es una función helper para nuestras pruebas.
+func ClearActiveSessions() {
+	activeSessions.Lock()
+	activeSessions.m = make(map[string]string)
+	activeSessions.Unlock()
 }

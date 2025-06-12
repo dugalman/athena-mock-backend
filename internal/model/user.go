@@ -2,13 +2,13 @@ package model
 
 // User representa la estructura genérica de un usuario, ya sea Socio u Operador.
 type User struct {
-	ID        string   `json:"id"`
-	UserID    string   `json:"userId"`    // DNI para Socio, Username para Operador
-	Password  string   `json:"-"`         // El '-' evita que se serialice en JSON
-	Profiles  []string `json:"profiles"`
-	Nickname  string   `json:"nickname"`
-	UserType  string   `json:"-"`
-	ViewAPK   any      `json:"-"`         // Usamos 'any' para flexibilidad
+	ID       string   `json:"id"`
+	UserID   string   `json:"userId"` // DNI para Socio, Username para Operador
+	Password string   `json:"-"`      // El '-' evita que se serialice en JSON
+	Profiles []string `json:"profiles"`
+	Nickname string   `json:"nickname"`
+	UserType string   `json:"-"`
+	ViewAPK  any      `json:"-"` // Usamos 'any' para flexibilidad
 }
 
 // Mock de base de datos en memoria
