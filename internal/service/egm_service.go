@@ -3,9 +3,11 @@ package service
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 	"sync"
 
 	"athena.mock/backend/internal/model"
+	"athena.mock/backend/internal/project"
 	"athena.mock/backend/internal/repository"
 )
 
@@ -32,7 +34,8 @@ func GetEGMService() (*EGMService, error) {
 			{ID: 1005, IsOccupied: false, OccupiedBy: nil, Game: "FORTUNE COINS", Credits: 150.5},
 		}
 		// Asegúrate de que exista la carpeta 'db'
-		repo, repoErr := repository.NewJSONPersistor("db/egms.json", initialEGMs)
+		dbPath := filepath.Join(project.ProjectRoot, "db", "egms.json") // <-- Ruta absoluta
+		repo, repoErr := repository.NewJSONPersistor(dbPath, initialEGMs)
 		if repoErr != nil {
 			err = fmt.Errorf("fallo al inicializar repositorio EGM: %w", repoErr)
 			return

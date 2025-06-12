@@ -3,9 +3,11 @@ package service
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 	"sync" // Importamos sync
 
 	"athena.mock/backend/internal/model"
+	"athena.mock/backend/internal/project"
 	"athena.mock/backend/internal/repository"
 )
 
@@ -17,7 +19,9 @@ var (
 )
 
 type SocioService struct {
-	repo *repository.JSONPersistor[model.Socio]
+	// repo *repository.JSONPersistor[model.Socio]
+	repo repository.SocioPersistor // <-- ¡CAMBIO CLAVE!
+
 }
 
 // GetSocioService initializes and returns a singleton instance of SocioService.
@@ -38,12 +42,14 @@ func GetSocioService() (*SocioService, error) {
 		}
 
 		// Asegúrate de que exista la carpeta 'db'
-		repo, repoErr := repository.NewJSONPersistor("db/socios.json", initialSocios)
+		// jsonRepo es un *JSONPersistor, que IMPLEMENTA la interfaz SocioPersistor.
+		dbPath := filepath.Join(project.ProjectRoot, "db", "socios.json") // <-- Ruta absoluta
+		jsonRepo, repoErr := repository.NewJSONPersistor(dbPath, initialSocios)
 		if repoErr != nil {
 			err = fmt.Errorf("fallo al inicializar el repositorio de Socios: %w", repoErr)
 			return
 		}
-		socioServiceInstance = &SocioService{repo: repo}
+		socioServiceInstance = &SocioService{repo: jsonRepo}
 	})
 	return socioServiceInstance, err
 }
