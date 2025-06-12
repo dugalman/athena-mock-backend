@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"path/filepath"
 
 	"athena.mock/backend/internal/model"
+	"athena.mock/backend/internal/project"
 )
 
 func main() {
@@ -38,8 +40,9 @@ func seedEGMs() {
 	}
 
 	// Guardar en archivo JSON
-	saveToJSON("db/egms.json", egms)
-	log.Println("-> db/egms.json sembrado con", len(egms), "registros.")
+	dbPath := filepath.Join(project.ProjectRoot, "db", "egms.json")
+	saveToJSON(dbPath, egms)
+	log.Println("->", dbPath, "sembrado con", len(egms), "registros.")
 }
 
 func seedSocios() {
@@ -60,8 +63,9 @@ func seedSocios() {
 		}
 	}
 
-	saveToJSON("db/socios.json", socios)
-	log.Println("-> db/socios.json sembrado con", len(socios), "registros.")
+	dbPath := filepath.Join(project.ProjectRoot, "db", "socios.json") // <-- Ruta absoluta
+	saveToJSON(dbPath, socios)
+	log.Println("->", dbPath, "sembrado con", len(socios), "registros.")
 }
 
 // saveToJSON es una función helper para escribir los datos.
