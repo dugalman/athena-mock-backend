@@ -17,6 +17,12 @@ var (
 	egmOnce            sync.Once
 )
 
+// ResetEGMServiceForTests reinicia el singleton. SOLO PARA USAR EN PRUEBAS.
+func ResetEGMServiceForTests() {
+	egmOnce = sync.Once{}
+	egmServiceInstance = nil
+}
+
 type EGMService struct {
 	repo *repository.JSONPersistor[model.EGM]
 }
@@ -26,7 +32,8 @@ type EGMService struct {
 // If the underlying repository file does not exist, it initializes it with default EGM data.
 // Returns the EGMService instance and any error encountered during initialization.
 func GetEGMService() (*EGMService, error) {
-	var err error
+	var initErr error // Usaremos una variable fuera del 'Do'
+
 	egmOnce.Do(func() {
 		// Datos iniciales si el archivo no existe
 		initialEGMs := []model.EGM{
@@ -37,12 +44,12 @@ func GetEGMService() (*EGMService, error) {
 		dbPath := filepath.Join(project.ProjectRoot, "db", "egms.json") // <-- Ruta absoluta
 		repo, repoErr := repository.NewJSONPersistor(dbPath, initialEGMs)
 		if repoErr != nil {
-			err = fmt.Errorf("fallo al inicializar repositorio EGM: %w", repoErr)
+			initErr = fmt.Errorf("fallo al inicializar repositorio EGM: %w", repoErr)
 			return
 		}
 		egmServiceInstance = &EGMService{repo: repo}
 	})
-	return egmServiceInstance, err
+	return egmServiceInstance, initErr // Devolvemos el error capturado
 }
 
 // findEGM busca una EGM por ID y devuelve un puntero a ella para modificarla.

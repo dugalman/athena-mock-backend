@@ -6,9 +6,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"athena.mock/backend/internal/config"
+	"athena.mock/backend/internal/model"
+	"athena.mock/backend/internal/project"
 	"athena.mock/backend/internal/service"
 	"github.com/stretchr/testify/assert"
 )
@@ -16,27 +19,52 @@ import (
 // setupTestServer es nuestra función helper clave para inicializar todo.
 func setupTestServer(t *testing.T) *Server {
 
-	// --- USAREMOS EL SEEDER PARA PREPARAR EL ENTORNO ---
-	// Primero, creamos una función seeder que no termine el programa con log.Fatalf
-	// Por ahora, para simplificar, llamaremos al `seeder` directamente desde el Makefile antes de testear.
+	// 1. Resetear los singletons para forzar la reinicialización.
+	service.ResetSocioServiceForTests()
+	service.ResetEGMServiceForTests()
 
-	// Limpiar archivos de db y sesiones para un estado de prueba fresco y aislado.
-	os.Remove("db/egms.json")
-	os.Remove("db/socios.json")
-	os.MkdirAll("db", 0755)
+	// 2. Limpiar el sistema de archivos
+	dbDir := filepath.Join(project.ProjectRoot, "db")
+	os.RemoveAll(dbDir)
+	os.MkdirAll(dbDir, 0755)
+
+	// 3. Sembrar la base de datos con un estado conocido para ESTA prueba.
+	// Esto es mejor que depender de `make seed`.
+	seedForTests()
+
+	// 4. Limpiar sesiones en memoria
 	ClearActiveSessions()
 
+	// 5. Crear las instancias de servicio (ahora se reinicializarán desde los archivos sembrados)
 	cfg := config.Load()
-
-	// Inicializamos los servicios reales para una prueba de integración completa.
-	egmService, err := service.NewEGMService()
-	assert.NoError(t, err) // Afirmamos que no hay error al crear el servicio
-	socioService, err := service.NewSocioService()
+	egmService, err := service.GetEGMService()
+	assert.NoError(t, err)
+	socioService, err := service.GetSocioService()
 	assert.NoError(t, err)
 
+	// Inicializamos los servicios reales para una prueba de integración completa.
 	// Creamos una instancia del servidor usando el nuevo patrón
-	server := NewServer(cfg, egmService, socioService)
-	return server
+	return NewServer(cfg, egmService, socioService)
+}
+
+// seedForTests es una versión del seeder que no usa `log.Fatalf` para poder
+// usarla dentro de las pruebas.
+func seedForTests() {
+	// Esta es una versión simplificada. En un proyecto real, se reutilizaría
+	// el código del seeder principal.
+
+	// Seed EGMs
+	egms := []model.EGM{{ID: 1004, Game: "DIOSES DE AZAR"} /* ... más egms ... */}
+	egmsFile, _ := json.MarshalIndent(egms, "", "  ")
+	os.WriteFile(filepath.Join(project.ProjectRoot, "db", "egms.json"), egmsFile, 0644)
+
+	// Seed Socios
+	socios := []model.Socio{
+		{ID: 1, DNI: "12345678", Password: "pass123", RealName: "Test User", Balance: 1000, Puntaje: 100},
+		{ID: 2, DNI: "20250514", RealName: "CVIP", Balance: 1000000, Puntaje: 6666, Password: "1234"},
+	}
+	sociosFile, _ := json.MarshalIndent(socios, "", "  ")
+	os.WriteFile(filepath.Join(project.ProjectRoot, "db", "socios.json"), sociosFile, 0644)
 }
 
 // TestAuthFlow prueba el ciclo completo de login y logout.

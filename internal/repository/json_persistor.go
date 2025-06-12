@@ -62,6 +62,7 @@ func (p *JSONPersistor[T]) save() error {
 
 // GetData devuelve una copia de los datos para su manipulación.
 // La lógica de negocio trabajará sobre esta copia y luego llamará a UpdateAll.
+// @implement Persistor
 func (p *JSONPersistor[T]) GetData() []T {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
@@ -72,6 +73,7 @@ func (p *JSONPersistor[T]) GetData() []T {
 }
 
 // UpdateAll reemplaza todos los datos en memoria y los guarda en el archivo.
+// @implement Persistor
 func (p *JSONPersistor[T]) UpdateAll(newData []T) error {
 	p.mu.Lock()
 	p.data = newData

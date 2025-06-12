@@ -1,79 +1,9 @@
 [
   {
-    "id": 1000,
-    "isOccupied": false,
-    "occupiedBy": null,
-    "game": "CLEOPATRA",
-    "ca": 0
-  },
-  {
-    "id": 1001,
-    "isOccupied": false,
-    "occupiedBy": null,
-    "game": "ZAPITO RULES",
-    "ca": 0
-  },
-  {
-    "id": 1002,
-    "isOccupied": false,
-    "occupiedBy": null,
-    "game": "ENDLESS FORTUNA",
-    "ca": 0
-  },
-  {
-    "id": 1003,
-    "isOccupied": false,
-    "occupiedBy": null,
-    "game": "TESOROS DEL INFRAMUNDO",
-    "ca": 0
-  },
-  {
     "id": 1004,
     "isOccupied": false,
     "occupiedBy": null,
     "game": "DIOSES DE AZAR",
-    "ca": 0
-  },
-  {
-    "id": 1005,
-    "isOccupied": false,
-    "occupiedBy": null,
-    "game": "LUCKY VALKYRIA",
-    "ca": 0
-  },
-  {
-    "id": 1006,
-    "isOccupied": false,
-    "occupiedBy": null,
-    "game": "ORO ETERNO",
-    "ca": 0
-  },
-  {
-    "id": 1007,
-    "isOccupied": false,
-    "occupiedBy": null,
-    "game": "SEVEN PYRAMIDS",
-    "ca": 0
-  },
-  {
-    "id": 1008,
-    "isOccupied": false,
-    "occupiedBy": null,
-    "game": "CAZADORES DE JACKPOT",
-    "ca": 0
-  },
-  {
-    "id": 1009,
-    "isOccupied": false,
-    "occupiedBy": null,
-    "game": "RUEDA DEL DESTINO",
-    "ca": 0
-  },
-  {
-    "id": 1010,
-    "isOccupied": false,
-    "occupiedBy": null,
-    "game": "MAGIA DEL DRAGÓN",
     "ca": 0
   }
 ]

@@ -18,6 +18,12 @@ var (
 	socioOnce              sync.Once
 )
 
+// ResetSocioServiceForTests reinicia el singleton. SOLO PARA USAR EN PRUEBAS.
+func ResetSocioServiceForTests() {
+	socioOnce = sync.Once{}
+	socioServiceInstance = nil
+}
+
 type SocioService struct {
 	// repo *repository.JSONPersistor[model.Socio]
 	repo repository.SocioPersistor // <-- ¡CAMBIO CLAVE!
@@ -33,7 +39,8 @@ type SocioService struct {
 //   - *SocioService: Pointer to the singleton SocioService instance.
 //   - error: Error if initialization fails, otherwise nil.
 func GetSocioService() (*SocioService, error) {
-	var err error
+	var initErr error // Usaremos una variable fuera del 'Do'
+
 	socioOnce.Do(func() {
 
 		initialSocios := []model.Socio{
@@ -46,12 +53,12 @@ func GetSocioService() (*SocioService, error) {
 		dbPath := filepath.Join(project.ProjectRoot, "db", "socios.json") // <-- Ruta absoluta
 		jsonRepo, repoErr := repository.NewJSONPersistor(dbPath, initialSocios)
 		if repoErr != nil {
-			err = fmt.Errorf("fallo al inicializar el repositorio de Socios: %w", repoErr)
+			initErr = fmt.Errorf("fallo al inicializar el repositorio de Socios: %w", repoErr)
 			return
 		}
 		socioServiceInstance = &SocioService{repo: jsonRepo}
 	})
-	return socioServiceInstance, err
+	return socioServiceInstance, initErr // Devolvemos el error capturado
 }
 
 // findSocio busca un socio por ID y devuelve un puntero a él.

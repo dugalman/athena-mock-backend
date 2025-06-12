@@ -2,7 +2,7 @@
 BINARY_NAME=athena_server
 
 # Versión del proyecto
-VERSION=2.0.0
+VERSION=3.0.0
 
 # Directorio de salida para los builds
 BUILD_DIR=build
@@ -25,7 +25,7 @@ test-unit:
 	$(GO) test -v -short ./...
 
 .PHONY: test-integration
-test-integration:
+test-integration: seed
 	@echo ">> Ejecutando pruebas de integración..."
 	$(GO) test -v ./...
 
