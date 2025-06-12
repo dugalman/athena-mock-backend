@@ -15,6 +15,11 @@ import (
 
 // setupTestServer es nuestra función helper clave para inicializar todo.
 func setupTestServer(t *testing.T) *Server {
+
+	// --- USAREMOS EL SEEDER PARA PREPARAR EL ENTORNO ---
+	// Primero, creamos una función seeder que no termine el programa con log.Fatalf
+	// Por ahora, para simplificar, llamaremos al `seeder` directamente desde el Makefile antes de testear.
+
 	// Limpiar archivos de db y sesiones para un estado de prueba fresco y aislado.
 	os.Remove("db/egms.json")
 	os.Remove("db/socios.json")
