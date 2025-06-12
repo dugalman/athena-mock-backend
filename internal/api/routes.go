@@ -1,27 +1,29 @@
 package api
 
 import (
-	"athena.mock/backend/internal/config"
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRouter(cfg *config.Config) *gin.Engine {
-	// gin.SetMode(gin.ReleaseMode) // Descomentar para producción
-	r := gin.Default()
+// setupRoutes registra todas las rutas de la aplicación.
+func (s *Server) setupRoutes(router *gin.Engine) {
+	// Rutas de Autenticación
+	router.POST("/login", s.LoginHandler()) // Nota: ahora es s.LoginHandler
+	router.POST("/logout", s.LogoutHandler())
 
-	// Definir rutas
-	r.POST("/login", LoginHandler(cfg))
-	r.POST("/logout", LogoutHandler(cfg))
+	// Grupo de rutas para EGM
+	egmRoutes := router.Group("/egms")
+	{
+		egmRoutes.POST("/:id/credit", s.addCreditToEGMHandler())
+		egmRoutes.DELETE("/:id/credit", s.removeAllCreditFromEGMHandler())
+		egmRoutes.POST("/:id/bind", s.bindEGMHandler())
+		egmRoutes.POST("/:id/unbind", s.unbindEGMHandler())
+	}
 
-	// Ejemplo de una ruta protegida con el middleware
-	// protected := r.Group("/api")
-	// protected.Use(auth.AuthMiddleware(cfg.SecretKey))
-	// {
-	//    protected.GET("/me", func(c *gin.Context) {
-	// 		userID, _ := c.Get("userID")
-	// 		c.JSON(http.StatusOK, gin.H{"message": "Hello user " + userID.(string)})
-	// 	})
-	// }
-
-	return r
+	// Grupo de rutas para Socio
+	socioRoutes := router.Group("/socios")
+	{
+		socioRoutes.GET("/:id/balance", s.getBalanceHandler())
+		socioRoutes.POST("/:id/balance/increment", s.incrementBalanceHandler())
+		socioRoutes.POST("/:id/balance/decrement", s.decrementBalanceHandler())
+	}
 }
