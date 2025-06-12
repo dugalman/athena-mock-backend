@@ -8,4 +8,5 @@ type Socio struct {
 	DNI      string  `json:"dni"`
 	Password string  `json:"password"`
 	Balance  float64 `json:"balance"`
+	Puntaje  int     `json:"puntaje"`
 }

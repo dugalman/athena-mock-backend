@@ -72,3 +72,32 @@ func (s *SocioService) GetBalance(socioID int) (float64, error) {
 	}
 	return socio.Balance, nil
 }
+
+func (s *SocioService) GetPuntaje(socioID int) (int, error) {
+	socios := s.repo.GetData()
+	socio, _ := s.findSocio(socios, socioID)
+	if socio == nil {
+		return 0, ErrSocioNotFound
+	}
+	return socio.Puntaje, nil
+}
+
+func (s *SocioService) AddPuntaje(socioID int, puntaje int) error {
+	socios := s.repo.GetData()
+	socio, _ := s.findSocio(socios, socioID)
+	if socio == nil {
+		return ErrSocioNotFound
+	}
+	socio.Puntaje += puntaje
+	return s.repo.UpdateAll(socios)
+}
+
+func (s *SocioService) DelPuntaje(socioID int, puntaje int) error {
+	socios := s.repo.GetData()
+	socio, _ := s.findSocio(socios, socioID)
+	if socio == nil {
+		return ErrSocioNotFound
+	}
+	socio.Puntaje -= puntaje
+	return s.repo.UpdateAll(socios)
+}

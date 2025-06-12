@@ -1,18 +1,19 @@
 package auth
 
 import (
+	"time"
+
 	"athena.mock/backend/internal/model"
 	"github.com/golang-jwt/jwt/v5"
-	"time"
 )
 
 // Claims define la estructura de nuestro token JWT.
 type Claims struct {
-	UserID   string `json:"userId"`
-	Nickname string `json:"nickname"`
+	UserID   string   `json:"userId"`
+	Nickname string   `json:"nickname"`
 	Roles    []string `json:"roles"`
-	Type     string `json:"type"`
-	ViewAPK  any    `json:"viewAPK"`
+	Type     string   `json:"type"`
+	ViewAPK  any      `json:"viewAPK"`
 	jwt.RegisteredClaims
 }
 

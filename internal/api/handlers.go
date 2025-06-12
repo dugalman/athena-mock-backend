@@ -268,7 +268,6 @@ func (s *Server) decrementBalanceHandler() gin.HandlerFunc {
 			return
 		}
 
-		// @TODO: ¿ tenes que prevenir saldos negativos? ¿ lo tenes que poner dentro del sevicio
 		err = s.socioService.DecrementBalance(id, req.Amount)
 		if err != nil {
 			if errors.Is(err, service.ErrSocioNotFound) {
