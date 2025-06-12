@@ -28,15 +28,11 @@ func main() {
 		log.Fatalf("Error al inicializar SocioService: %v", err)
 	}
 
-	// Inyectar los servicios en el enrutador
-	// (Necesitaremos modificar SetupRouter para aceptar estos servicios)
-	// router := api.SetupRouter(cfg, egmService, socioService) // <--- PRÓXIMO PASO
-
-	// POR AHORA, SOLO INICIAMOS EL SERVIDOR EXISTENTE
-	router := api.SetupRouter(cfg)
+	// Creamos la instancia del servidor con sus dependencias
+	server := api.NewServer(cfg, egmService, socioService)
 
 	log.Printf("Servidor Go escuchando en http://localhost:%s\n", cfg.Port)
-	if err := router.Run(":" + cfg.Port); err != nil {
+	if err := server.Run(":" + cfg.Port); err != nil {
 		log.Fatalf("Error al iniciar el servidor: %v", err)
 	}
 }
