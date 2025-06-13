@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0] - 2023-06-12
+
+¡Excelente! Este es un paso crucial para robustecer la seguridad y la lógica de tu API. Implementar un middleware de autenticación y manejar tokens inválidos es fundamental.
+
+Este escenario es más complejo que los anteriores porque introduce dos conceptos nuevos:
+*   Rutas Protegidas: Rutas que requieren un token JWT válido para ser accedidas.
+*   Whitelist (Lista Blanca): Una lista de rutas que no requieren autenticación (como /login).
+
+El Plan
+1. Refactorizar el LogoutHandler: Lo cambiaremos para que extraiga el userId del token JWT en lugar del cuerpo de la petición. Esto es más seguro y estándar.
+2. Actualizar el Middleware de Autenticación: Modificaremos nuestro AuthMiddleware para que sea más robusto y lo aplicaremos a las rutas que necesiten protección.
+3. Implementar la Lógica de Whitelist: Modificaremos la configuración de nuestras rutas para aplicar el middleware solo a las rutas que no estén en la lista blanca. gin hace esto muy manejable.
+4. Escribir la Prueba de Integración: Crearemos una prueba específica que intente hacer logout con un token inválido/expirado y verifique la respuesta de error 401.
+
 
 ## [3.0.0] - 2023-06-12
 

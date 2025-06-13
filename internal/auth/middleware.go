@@ -13,34 +13,41 @@ func AuthMiddleware(secretKey string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is required"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": 401, "message": "Falta la cabecera de autorización"})
 			return
 		}
 
-		// El token usualmente viene como "Bearer <token>"
 		parts := strings.Split(authHeader, " ")
 		if len(parts) != 2 || parts[0] != "Bearer" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authorization header format must be Bearer {token}"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": 401, "message": "La cabecera de autorización debe tener el formato 'Bearer {token}'"})
 			return
 		}
-
 		tokenString := parts[1]
 
-		// Parsear el token
 		claims := &Claims{}
 		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 			return []byte(secretKey), nil
 		})
 
-		if err != nil || !token.Valid {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		// Aquí manejamos específicamente los errores de token (inválido, expirado, etc.)
+		if err != nil {
+			if err == jwt.ErrTokenExpired {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": 401, "message": "El token ha expirado"})
+			} else {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": 401, "message": "Token inválido"})
+			}
 			return
 		}
 
-		// Pasamos los datos del usuario al contexto de la petición para que
-		// los siguientes handlers puedan usarlos.
+		if !token.Valid {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": 401, "message": "Token inválido"})
+			return
+		}
+
+		// Almacenamos tanto el ID del usuario (de los claims) como su "username" que usamos para las sesiones.
+		// Asumimos que el "Subject" del token contiene el username/dni. Vamos a añadirlo.
 		c.Set("userID", claims.UserID)
-		c.Set("userProfiles", claims.Roles)
+		c.Set("sessionID", claims.Subject) // Usaremos el 'Subject' para el mapa de sesiones
 
 		c.Next()
 	}

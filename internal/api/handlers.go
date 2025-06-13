@@ -81,25 +81,28 @@ func (s *Server) LoginHandler() gin.HandlerFunc {
 // LogoutHandler elimina una sesión activa.
 func (s *Server) LogoutHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var body LogoutRequestBody
-		// En una implementación real, el userID vendría del token JWT (c.GetString("userID"))
-		// pero para replicar el test de Node.js, lo leemos del body.
-		if err := c.ShouldBindJSON(&body); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body, expecting userId"})
+
+		// El userID ahora viene del middleware, que ya validó el token.
+		// Esto es mucho más seguro que leerlo del body.
+		sessionID, exists := c.Get("sessionID")
+
+		if !exists {
+			// Este caso no debería ocurrir si el middleware está bien configurado.
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "No se pudo obtener la ID de sesión del token"})
 			return
 		}
 
-		userID := body.UserID
+		userIDStr := sessionID.(string)
 
 		// Eliminar la sesión
 		activeSessions.Lock()
-		delete(activeSessions.m, userID)
+		delete(activeSessions.m, userIDStr)
 		activeSessions.Unlock()
 
 		c.JSON(http.StatusOK, gin.H{
 			"requestType": "logout",
 			"error":       0,
-			"message":     "Sesión finalizada. Usuario: " + userID,
+			"message":     "Sesión finalizada. Usuario: " + userIDStr,
 		})
 	}
 }

@@ -2,7 +2,7 @@
 BINARY_NAME=athena_server
 
 # Versión del proyecto
-VERSION=3.0.0
+VERSION=4.0.0
 
 # Directorio de salida para los builds
 BUILD_DIR=build

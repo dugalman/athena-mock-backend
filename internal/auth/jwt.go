@@ -29,6 +29,7 @@ func CreateToken(user model.Authenticatable, secretKey string) (string, error) {
 		ViewAPK:  user.GetViewAPK(),
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
+			Subject:   user.GetUserID(), // <-- AÑADIMOS EL SUBJECT
 		},
 	}
 
