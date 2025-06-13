@@ -12,14 +12,20 @@ type Server struct {
 	cfg          *config.Config
 	egmService   *service.EGMService
 	socioService *service.SocioService
+	authService  *service.AuthService // <-- NUEVO
+
 }
 
 // NewServer crea una nueva instancia del servidor y configura las rutas.
-func NewServer(cfg *config.Config, egmService *service.EGMService, socioService *service.SocioService) *Server {
+func NewServer(cfg *config.Config, egmService *service.EGMService, socioService *service.SocioService, operatorService *service.OperatorService) *Server {
+
+	authService := service.NewAuthService(socioService, operatorService) // <-- NUEVO
+
 	server := &Server{
 		cfg:          cfg,
 		egmService:   egmService,
 		socioService: socioService,
+		authService:  authService, // <-- NUEVO
 	}
 
 	router := gin.Default()

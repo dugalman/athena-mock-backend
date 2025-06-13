@@ -19,3 +19,7 @@ type EGMPersistor interface {
 type SocioPersistor interface {
 	Persistor[model.Socio]
 }
+
+type OperatorPersistor interface {
+	Persistor[model.Operator]
+}

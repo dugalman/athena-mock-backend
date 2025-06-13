@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -40,12 +41,14 @@ func setupTestServer(t *testing.T) *Server {
 	cfg := config.Load()
 	egmService, err := service.GetEGMService()
 	assert.NoError(t, err)
-	socioService, err := service.GetSocioService()
+	partnerService, err := service.GetSocioService()
+	assert.NoError(t, err)
+	operatorService, err := service.GetOperatorService()
 	assert.NoError(t, err)
 
 	// Inicializamos los servicios reales para una prueba de integración completa.
 	// Creamos una instancia del servidor usando el nuevo patrón
-	return NewServer(cfg, egmService, socioService)
+	return NewServer(cfg, egmService, partnerService, operatorService)
 }
 
 // seedForTests es una versión del seeder que no usa `log.Fatalf` para poder
@@ -66,6 +69,15 @@ func seedForTests() {
 	}
 	sociosFile, _ := json.MarshalIndent(socios, "", "  ")
 	os.WriteFile(filepath.Join(project.ProjectRoot, "db", "socios.json"), sociosFile, 0644)
+
+	// Seed Operadores
+	operadores := []model.Operator{
+		{UserID: "asistenteUNO", OperadorID: 671, Password: "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92", Profiles: []string{"asistente"}, Nickname: "asistenteUNO", RealName: "Bruce Wayne", DNI: 30350516},
+		{UserID: "asistenteDOS", OperadorID: 672, Password: "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92", Profiles: []string{"asistente"}, Nickname: "asistenteDOS", RealName: "Clark kent", DNI: 30350515},
+	}
+	operadoresFile, _ := json.MarshalIndent(operadores, "", "  ")
+	os.WriteFile(filepath.Join(project.ProjectRoot, "db", "operadores.json"), operadoresFile, 0644)
+
 }
 
 // TestAuthFlow prueba el ciclo completo de login y logout.
@@ -229,4 +241,30 @@ func TestInfoEndpoint(t *testing.T) {
 	assert.Equal(t, server.cfg.Port, infoData.Port, "El puerto debe coincidir con la configuración")
 	assert.Equal(t, false, infoData.Asistente, "El campo asistente debe ser false")
 	assert.Equal(t, runtime.GOOS+"/"+runtime.GOARCH, infoData.HostPlatform, "La plataforma del host debe ser correcta")
+}
+
+// ...
+func TestOperatorLogin(t *testing.T) {
+	server := setupTestServer(t)
+	router := server.router
+
+	// Contraseña para el seeder de operadores es el hash
+	password := "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92"
+	loginBody := fmt.Sprintf(`{"data": {"userId": "asistenteUNO", "password": "%s"}}`, password)
+
+	req, _ := http.NewRequest("POST", "/login", bytes.NewBufferString(loginBody))
+	req.Header.Set("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code, "El login del operador debería ser exitoso")
+
+	var loginResponse map[string]interface{}
+	json.Unmarshal(w.Body.Bytes(), &loginResponse)
+
+	data, _ := loginResponse["data"].(map[string]interface{})
+	profiles, _ := data["userProfiles"].([]interface{})
+
+	assert.Equal(t, "asistente", profiles[0], "El perfil del usuario debe ser 'asistente'")
 }

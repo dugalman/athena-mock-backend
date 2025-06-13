@@ -27,7 +27,6 @@ func ResetSocioServiceForTests() {
 type SocioService struct {
 	// repo *repository.JSONPersistor[model.Socio]
 	repo repository.SocioPersistor // <-- ¡CAMBIO CLAVE!
-
 }
 
 // GetSocioService initializes and returns a singleton instance of SocioService.
@@ -43,15 +42,15 @@ func GetSocioService() (*SocioService, error) {
 
 	socioOnce.Do(func() {
 
-		initialSocios := []model.Socio{
-			{ID: 1, RealName: "Juan Perez", Name: "Juancho", DNI: "12345678", Password: "pass123", Balance: 1000.0},
-			{ID: 2, RealName: "Maria Garcia", Name: "Mary", DNI: "87654321", Password: "mypass", Balance: 500.0},
+		defaultPartners := []model.Socio{
+			{ID: 1, DNI: "12345678", Password: "pass123", RealName: "Test User", Balance: 1000, Puntaje: 100},
+			{ID: 2, DNI: "20250514", RealName: "CVIP", Balance: 1000000, Puntaje: 6666, Password: "1234"},
 		}
 
 		// Asegúrate de que exista la carpeta 'db'
 		// jsonRepo es un *JSONPersistor, que IMPLEMENTA la interfaz SocioPersistor.
 		dbPath := filepath.Join(project.ProjectRoot, "db", "socios.json") // <-- Ruta absoluta
-		jsonRepo, repoErr := repository.NewJSONPersistor(dbPath, initialSocios)
+		jsonRepo, repoErr := repository.NewJSONPersistor(dbPath, defaultPartners)
 		if repoErr != nil {
 			initErr = fmt.Errorf("fallo al inicializar el repositorio de Socios: %w", repoErr)
 			return

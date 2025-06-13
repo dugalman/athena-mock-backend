@@ -23,13 +23,17 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error al inicializar EGMService: %v", err)
 	}
-	socioService, err := service.GetSocioService()
+	partnerService, err := service.GetSocioService()
+	if err != nil {
+		log.Fatalf("Error al inicializar SocioService: %v", err)
+	}
+	operatorService, err := service.GetOperatorService()
 	if err != nil {
 		log.Fatalf("Error al inicializar SocioService: %v", err)
 	}
 
 	// Creamos la instancia del servidor con sus dependencias
-	server := api.NewServer(cfg, egmService, socioService)
+	server := api.NewServer(cfg, egmService, partnerService, operatorService)
 
 	log.Printf("Servidor Go escuchando en http://localhost:%s\n", cfg.Port)
 	if err := server.Run(":" + cfg.Port); err != nil {

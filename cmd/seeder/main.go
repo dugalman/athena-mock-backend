@@ -20,8 +20,21 @@ func main() {
 
 	seedEGMs()
 	seedSocios()
+	seedOperadores()
 
 	log.Println("Seeding completado exitosamente.")
+}
+
+func seedOperadores() {
+	operadores := []model.Operator{
+		{UserID: "asistenteDOS", OperadorID: 672, Password: "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92", Profiles: []string{"asistente"}, Nickname: "asistenteDOS", RealName: "Clark kent", DNI: 30350515},
+		{UserID: "asistenteTRES", OperadorID: 673, Password: "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92", Profiles: []string{"asistente"}, Nickname: "asistenteTRES", RealName: "Lana Lan", DNI: 30350516},
+		{UserID: "asistenteUNO", OperadorID: 671, Password: "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92", Profiles: []string{"asistente"}, Nickname: "asistenteUNO", RealName: "Bruce Wayne", DNI: 30350516},
+	}
+
+	dbPath := filepath.Join(project.ProjectRoot, "db", "operadores.json")
+	saveToJSON(dbPath, operadores)
+	log.Println("->", dbPath, "sembrado con", len(operadores), "registros.")
 }
 
 func seedEGMs() {

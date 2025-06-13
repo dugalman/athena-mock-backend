@@ -17,15 +17,16 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-func CreateToken(user model.User, secretKey string) (string, error) {
+func CreateToken(user model.Authenticatable, secretKey string) (string, error) {
+
 	expirationTime := time.Now().Add(1 * time.Hour) // Token válido por 1 hora
 
 	claims := &Claims{
-		UserID:   user.ID,
-		Nickname: user.Nickname,
-		Roles:    user.Profiles,
-		Type:     user.UserType,
-		ViewAPK:  user.ViewAPK,
+		UserID:   user.GetID(),
+		Nickname: user.GetNickname(),
+		Roles:    user.GetProfiles(),
+		Type:     user.GetUserType(),
+		ViewAPK:  user.GetViewAPK(),
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 		},

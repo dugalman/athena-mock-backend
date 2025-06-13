@@ -30,6 +30,7 @@ func (s *Server) LoginHandler() gin.HandlerFunc {
 			return
 		}
 
+		// ... (parseo del body sin cambios) ...
 		userID := body.Data.UserID
 		password := body.Data.Password
 
@@ -42,14 +43,14 @@ func (s *Server) LoginHandler() gin.HandlerFunc {
 			return
 		}
 
-		// Buscar usuario y validar contraseña
-		user, found := model.FindUserByID(userID)
-		if !found || user.Password != password {
+		// Usamos el nuevo servicio de autenticación
+		user, err := s.authService.AuthenticateUser(userID, password)
+		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": 401, "message": "Usuario o contraseña incorrecta"})
 			return
 		}
 
-		// Generar el token JWT
+		// Generar el token JWT usando la interfaz
 		tokenString, err := auth.CreateToken(user, s.cfg.SecretKey)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create token"})
@@ -65,11 +66,11 @@ func (s *Server) LoginHandler() gin.HandlerFunc {
 		c.JSON(http.StatusOK, gin.H{
 			"requestType": "login",
 			"error":       0,
-			"message":     "Usuario: " + user.UserID + " logueado",
+			"message":     "Usuario: " + user.GetUserID() + " logueado",
 			"data": gin.H{
 				"token":        tokenString,
-				"userId":       user.UserID,
-				"userProfiles": user.Profiles,
+				"userId":       user.GetUserID(),
+				"userProfiles": user.GetProfiles(),
 				// ... otros campos de la respuesta
 			},
 		})
