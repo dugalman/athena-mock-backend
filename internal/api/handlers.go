@@ -34,7 +34,7 @@ func (s *Server) LoginHandler() gin.HandlerFunc {
 		userID := body.Data.UserID
 		password := body.Data.Password
 
-		// Verificar si ya hay sesión activa
+		// --- VERIFICACIÓN DE SESIÓN ACTIVA ---
 		activeSessions.RLock()
 		_, loggedIn := activeSessions.m[userID]
 		activeSessions.RUnlock()
@@ -46,6 +46,7 @@ func (s *Server) LoginHandler() gin.HandlerFunc {
 		// Usamos el nuevo servicio de autenticación
 		user, err := s.authService.AuthenticateUser(userID, password)
 		if err != nil {
+			// Los 3 casos que queremos probar terminan aquí.
 			c.JSON(http.StatusUnauthorized, gin.H{"error": 401, "message": "Usuario o contraseña incorrecta"})
 			return
 		}
@@ -57,7 +58,7 @@ func (s *Server) LoginHandler() gin.HandlerFunc {
 			return
 		}
 
-		// Almacenar sesión activa
+		// --- ALMACENAMIENTO DE SESIÓN ACTIVA ---
 		activeSessions.Lock()
 		activeSessions.m[userID] = tokenString
 		activeSessions.Unlock()

@@ -39,7 +39,7 @@ func (s *AuthService) AuthenticateUser(userID, password string) (model.Authentic
 		socios := s.socioRepo.GetData()
 		for _, socio := range socios {
 			if socio.DNI == userID {
-				// En una app real, aquí se compararía un hash de la contraseña.
+				// Caso 1 y 2: Contraseña inválida o vacía
 				if socio.Password == password {
 					return socio, nil
 				}
@@ -60,5 +60,6 @@ func (s *AuthService) AuthenticateUser(userID, password string) (model.Authentic
 		}
 	}
 
+	// Caso 3: El bucle termina sin encontrar al usuario
 	return nil, ErrUserNotFound
 }

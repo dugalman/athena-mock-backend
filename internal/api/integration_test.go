@@ -11,11 +11,14 @@ import (
 	"runtime"
 	"testing"
 
+	"athena.mock/backend/internal/auth"
 	"athena.mock/backend/internal/config"
 	"athena.mock/backend/internal/model"
 	"athena.mock/backend/internal/project"
 	"athena.mock/backend/internal/service"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/golang-jwt/jwt/v5" // Y el paquete jwt
 )
 
 // setupTestServer es nuestra función helper clave para inicializar todo.
@@ -267,4 +270,147 @@ func TestOperatorLogin(t *testing.T) {
 	profiles, _ := data["userProfiles"].([]interface{})
 
 	assert.Equal(t, "asistente", profiles[0], "El perfil del usuario debe ser 'asistente'")
+}
+
+// Test 1: Verifica que un login de socio es exitoso y el JWT contiene los datos correctos.
+func TestLoginSuccessAndJWTValidation(t *testing.T) {
+	server := setupTestServer(t)
+	router := server.router
+
+	// 1. Arrange: Preparar el cuerpo de la petición
+	loginBody := `{"data": {"userId": "12345678", "password": "pass123"}}`
+	req, _ := http.NewRequest("POST", "/login", bytes.NewBufferString(loginBody))
+	req.Header.Set("Content-Type", "application/json")
+
+	// 2. Act: Ejecutar la petición
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	// 3. Assert: Verificar la respuesta y el token
+	assert.Equal(t, http.StatusOK, w.Code, "El código de estado del login debería ser 200")
+
+	var loginResponse map[string]interface{}
+	err := json.Unmarshal(w.Body.Bytes(), &loginResponse)
+	assert.NoError(t, err)
+
+	data, _ := loginResponse["data"].(map[string]interface{})
+	tokenString, ok := data["token"].(string)
+	assert.True(t, ok, "La respuesta debe contener un token")
+
+	// 4. Validar el contenido del JWT
+	claims := &auth.Claims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		// Verificamos que el algoritmo de firma sea el esperado (HS256)
+		_, ok := token.Method.(*jwt.SigningMethodHMAC)
+		assert.True(t, ok, "El algoritmo de firma del token es inesperado")
+		return []byte(server.cfg.SecretKey), nil
+	})
+
+	assert.NoError(t, err, "El token JWT debería ser válido y parseable")
+	assert.True(t, token.Valid, "El campo 'valid' del token debe ser true")
+
+	// Verificamos los claims (el "contenido" del token)
+	assert.Equal(t, "1", claims.UserID, "El ID del usuario en el token es incorrecto") // El socio con DNI 12345678 tiene ID 1 en el seeder
+	assert.Equal(t, "partner", claims.Type, "El tipo de usuario en el token debe ser 'partner'")
+	assert.Contains(t, claims.Roles, "socio", "El rol 'socio' debe estar en el token")
+}
+
+// Test 2: Verifica que un segundo intento de login para el mismo usuario falla.
+func TestLoginFailsIfAlreadyLoggedIn(t *testing.T) {
+	server := setupTestServer(t)
+	router := server.router
+
+	// 1. Arrange: Preparar el cuerpo de la petición
+	loginBody := `{"data": {"userId": "12345678", "password": "pass123"}}`
+	req, _ := http.NewRequest("POST", "/login", bytes.NewBufferString(loginBody))
+	req.Header.Set("Content-Type", "application/json")
+
+	// 2. Act (Primer Login): Ejecutar la primera petición. Debería ser exitosa.
+	w1 := httptest.NewRecorder()
+	router.ServeHTTP(w1, req)
+
+	// 3. Assert (Primer Login): Verificar que el primer login fue exitoso.
+	assert.Equal(t, http.StatusOK, w1.Code, "El primer login debería ser exitoso")
+
+	// 4. Act (Segundo Login): Ejecutar la misma petición de nuevo.
+	req, _ = http.NewRequest("POST", "/login", bytes.NewBufferString(loginBody))
+	req.Header.Set("Content-Type", "application/json")
+	w2 := httptest.NewRecorder()
+	router.ServeHTTP(w2, req)
+
+	// 5. Assert (Segundo Login): Verificar que el segundo login falla con el mensaje correcto.
+	assert.Equal(t, http.StatusUnauthorized, w2.Code, "El segundo login debería fallar con código 401")
+
+	var errorResponse map[string]interface{}
+	err := json.Unmarshal(w2.Body.Bytes(), &errorResponse)
+	assert.NoError(t, err)
+
+	expectedMessage := "Usuario ya logueado en otro dispositivo"
+	assert.Equal(t, expectedMessage, errorResponse["message"], "El mensaje de error para doble login es incorrecto")
+}
+
+// Test 1: Verifica que el login falla con contraseña incorrecta.
+func TestLoginFailsWithInvalidPassword(t *testing.T) {
+	server := setupTestServer(t)
+	router := server.router
+
+	// 1. Arrange: Preparar el body con una contraseña que no corresponde.
+	loginBody := `{"data": {"userId": "12345678", "password": "wrongpassword"}}`
+	req, _ := http.NewRequest("POST", "/login", bytes.NewBufferString(loginBody))
+	req.Header.Set("Content-Type", "application/json")
+
+	// 2. Act
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	// 3. Assert
+	assert.Equal(t, http.StatusUnauthorized, w.Code, "El login con contraseña incorrecta debe devolver 401")
+
+	var errorResponse map[string]interface{}
+	json.Unmarshal(w.Body.Bytes(), &errorResponse)
+	assert.Equal(t, "Usuario o contraseña incorrecta", errorResponse["message"], "El mensaje de error es incorrecto")
+}
+
+// Test 2: Verifica que el login falla con contraseña vacía.
+func TestLoginFailsWithEmptyPassword(t *testing.T) {
+	server := setupTestServer(t)
+	router := server.router
+
+	// 1. Arrange: Preparar el body con una contraseña vacía.
+	loginBody := `{"data": {"userId": "12345678", "password": ""}}`
+	req, _ := http.NewRequest("POST", "/login", bytes.NewBufferString(loginBody))
+	req.Header.Set("Content-Type", "application/json")
+
+	// 2. Act
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	// 3. Assert
+	assert.Equal(t, http.StatusUnauthorized, w.Code, "El login con contraseña vacía debe devolver 401")
+
+	var errorResponse map[string]interface{}
+	json.Unmarshal(w.Body.Bytes(), &errorResponse)
+	assert.Equal(t, "Usuario o contraseña incorrecta", errorResponse["message"], "El mensaje de error es incorrecto")
+}
+
+// Test 3: Verifica que el login falla si el usuario no existe.
+func TestLoginFailsWithNonExistentUser(t *testing.T) {
+	server := setupTestServer(t)
+	router := server.router
+
+	// 1. Arrange: Preparar el body con un DNI que no está en nuestro seeder.
+	loginBody := `{"data": {"userId": "99999999", "password": "anypassword"}}`
+	req, _ := http.NewRequest("POST", "/login", bytes.NewBufferString(loginBody))
+	req.Header.Set("Content-Type", "application/json")
+
+	// 2. Act
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	// 3. Assert
+	assert.Equal(t, http.StatusUnauthorized, w.Code, "El login con usuario inexistente debe devolver 401")
+
+	var errorResponse map[string]interface{}
+	json.Unmarshal(w.Body.Bytes(), &errorResponse)
+	assert.Equal(t, "Usuario o contraseña incorrecta", errorResponse["message"], "El mensaje de error es incorrecto")
 }
