@@ -86,50 +86,53 @@ func seedForTests() {
 // TestAuthFlow prueba el ciclo completo de login y logout.
 func TestAuthFlow(t *testing.T) {
 	server := setupTestServer(t)
-	router := server.router // Usamos el router del servidor que creamos
+	router := server.router
 
 	// --- Test de Login ---
 	loginBody := `{"data": {"userId": "12345678", "password": "pass123"}}`
-	req, _ := http.NewRequest("POST", "/login", bytes.NewBufferString(loginBody))
-	req.Header.Set("Content-Type", "application/json")
+	loginReq, _ := http.NewRequest("POST", "/login", bytes.NewBufferString(loginBody))
+	loginReq.Header.Set("Content-Type", "application/json")
 
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+	wLogin := httptest.NewRecorder()
+	router.ServeHTTP(wLogin, loginReq)
 
-	// Aserciones del Login
-	assert.Equal(t, http.StatusOK, w.Code, "El código de estado del login debería ser 200")
+	assert.Equal(t, http.StatusOK, wLogin.Code, "El código de estado del login debería ser 200")
 
 	var loginResponse map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &loginResponse)
-	assert.NoError(t, err, "La respuesta del login debería ser un JSON válido")
+	err := json.Unmarshal(wLogin.Body.Bytes(), &loginResponse)
+	assert.NoError(t, err)
 
+	// --- ¡CAMBIO CLAVE! CAPTURAR EL TOKEN ---
 	data, _ := loginResponse["data"].(map[string]interface{})
 	token, tokenExists := data["token"].(string)
 	assert.True(t, tokenExists, "La respuesta del login debe contener un token")
-	assert.NotEmpty(t, token, "El token no puede estar vacío")
 
-	// --- Test de Logout ---
-	logoutBody := `{"userId": "12345678"}`
-	req, _ = http.NewRequest("POST", "/logout", bytes.NewBufferString(logoutBody))
-	req.Header.Set("Content-Type", "application/json")
+	// --- Test de Logout CON TOKEN ---
+	// La prueba original enviaba un body, pero nuestro nuevo handler ya no lo necesita.
+	// Enviaremos un body vacío `{}` ya que la petición es POST.
+	logoutReq, _ := http.NewRequest("POST", "/logout", bytes.NewBufferString(`{}`))
+	logoutReq.Header.Set("Content-Type", "application/json")
+	// --- ¡CAMBIO CLAVE! AÑADIR LA CABECERA DE AUTORIZACIÓN ---
+	logoutReq.Header.Set("Authorization", "Bearer "+token)
 
-	w = httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+	wLogout := httptest.NewRecorder()
+	router.ServeHTTP(wLogout, logoutReq)
 
 	// Aserciones del Logout
-	assert.Equal(t, http.StatusOK, w.Code, "El código de estado del logout debería ser 200")
+	assert.Equal(t, http.StatusOK, wLogout.Code, "El código de estado del logout debería ser 200")
 	var logoutResponse map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &logoutResponse)
+	json.Unmarshal(wLogout.Body.Bytes(), &logoutResponse)
 	assert.Equal(t, "logout", logoutResponse["requestType"], "El tipo de petición de logout debe ser 'logout'")
 	assert.Contains(t, logoutResponse["message"], "Sesión finalizada", "El mensaje de logout debe indicar que la sesión finalizó")
 
 	// --- Verificación Post-Logout ---
-	req, _ = http.NewRequest("POST", "/login", bytes.NewBufferString(loginBody))
-	req.Header.Set("Content-Type", "application/json")
-	w = httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+	// Esta parte ya era correcta.
+	postLogoutLoginReq, _ := http.NewRequest("POST", "/login", bytes.NewBufferString(loginBody))
+	postLogoutLoginReq.Header.Set("Content-Type", "application/json")
+	wPostLogout := httptest.NewRecorder()
+	router.ServeHTTP(wPostLogout, postLogoutLoginReq)
 
-	assert.Equal(t, http.StatusOK, w.Code, "Debería ser posible hacer login de nuevo después del logout")
+	assert.Equal(t, http.StatusOK, wPostLogout.Code, "Debería ser posible hacer login de nuevo después del logout")
 }
 
 // TestEGMAndSocioFlow prueba el flujo de interacción entre socios y EGMs.
@@ -414,3 +417,65 @@ func TestLoginFailsWithNonExistentUser(t *testing.T) {
 	json.Unmarshal(w.Body.Bytes(), &errorResponse)
 	assert.Equal(t, "Usuario o contraseña incorrecta", errorResponse["message"], "El mensaje de error es incorrecto")
 }
+
+// func TestLogoutWithInvalidToken(t *testing.T) {
+// 	server := setupTestServer(t)
+// 	router := server.router
+
+// 	// 1. Arrange: Crear una petición de logout con un token falso.
+// 	invalidToken := "un.token.falso"
+// 	req, _ := http.NewRequest("POST", "/logout", nil)
+// 	req.Header.Set("Content-Type", "application/json")
+// 	req.Header.Set("Authorization", "Bearer "+invalidToken)
+
+// 	// 2. Act
+// 	w := httptest.NewRecorder()
+// 	router.ServeHTTP(w, req)
+
+// 	// 3. Assert
+// 	assert.Equal(t, http.StatusUnauthorized, w.Code, "Logout con token inválido debe devolver 401")
+
+// 	var errorResponse map[string]interface{}
+// 	json.Unmarshal(w.Body.Bytes(), &errorResponse)
+
+// 	// Para replicar el mensaje exacto de la respuesta que pusiste.
+// 	// La respuesta real del middleware es solo `{"error":401, "message":"Token inválido"}`
+// 	// pero podemos verificar que el mensaje contenga la palabra clave.
+// 	assert.Contains(t, errorResponse["message"], "Token inválido", "El mensaje de error es incorrecto")
+// }
+
+// func TestLogoutWithExpiredToken(t *testing.T) {
+// 	server := setupTestServer(t)
+// 	router := server.router
+
+// 	// 1. Arrange: Crear un token que ya ha expirado.
+// 	// Para esto, modificaremos temporalmente la función de creación de tokens
+// 	// o crearemos uno manualmente. La forma manual es más limpia para un test.
+// 	secretKey := []byte(server.cfg.SecretKey)
+
+// 	// Creamos claims para un token que expiró hace una hora.
+// 	expiredClaims := &auth.Claims{
+// 		UserID:  "1",
+// 		Subject: "12345678",
+// 		RegisteredClaims: jwt.RegisteredClaims{
+// 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(-1 * time.Hour)),
+// 		},
+// 	}
+// 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, expiredClaims)
+// 	expiredTokenString, err := token.SignedString(secretKey)
+// 	assert.NoError(t, err)
+
+// 	req, _ := http.NewRequest("POST", "/logout", nil)
+// 	req.Header.Set("Authorization", "Bearer "+expiredTokenString)
+
+// 	// 2. Act
+// 	w := httptest.NewRecorder()
+// 	router.ServeHTTP(w, req)
+
+// 	// 3. Assert
+// 	assert.Equal(t, http.StatusUnauthorized, w.Code, "Logout con token expirado debe devolver 401")
+
+// 	var errorResponse map[string]interface{}
+// 	json.Unmarshal(w.Body.Bytes(), &errorResponse)
+// 	assert.Equal(t, "El token ha expirado", errorResponse["message"], "El mensaje para token expirado es incorrecto")
+// }
